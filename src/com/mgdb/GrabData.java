@@ -1,6 +1,8 @@
 package com.mgdb;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -16,28 +18,55 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.json.JSONObject;
 import org.sqlite.SQLiteJDBCLoader;
 
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 import com.mgdb.datatypes.Person;
 import com.mgdb.datatypes.PersonFunnel;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class GrabData {
     static String getUrl = "http://genealogy.math.ndsu.nodak.edu/id.php?id=";
-    static int values = 152901;//63188;//126087;//85309;//128931;//63244;//85309;
+    static String file = "/Users/hzhao/work/git/math/MGDB/mgdb_info";
+    //static int values = 152901;//63188;//126087;//85309;//128931;//63244;//85309;
     
-    public static void main(String[] args) throws IOException {     
-        ArrayList<String> pageInfo = new ArrayList<String>();
-        doGet(getUrl, values, pageInfo);
-        //ArrayList<String> info = extractInfo(pageInfo);
-        Person person = new Person(values);
-        person.parseInfo(pageInfo);
-        System.out.println(person.toString());
-        
+    public static void main(String[] args) throws IOException {
+        long currentTime = System.currentTimeMillis();
+        for(int i = 1; i< 1000; i++) {
+            ArrayList<String> pageInfo = new ArrayList<String>();
+            doGet(getUrl, i, pageInfo);
+            //ArrayList<String> info = extractInfo(pageInfo);
+            Person person = new Person(i);
+            person.parseInfo(pageInfo);
+            System.out.println(person.toString());
+            try {
+                writeFile(file + currentTime + ".json", person.toJSON());
+            }catch(Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        System.out.println("Total cost : " + (System.currentTimeMillis() - currentTime));
         //recursiveAncestors(person);
         //recursiveDecendents(person);
-        BloomFilter<Person> friends = BloomFilter.create(new PersonFunnel(), 200000, 0.000001);
+        //BloomFilter<Person> friends = BloomFilter.create(new PersonFunnel(), 200000, 0.000001);
+        //insertPerson(friends);    
+        //testBloomFilter(friends);
+    }
+    
+    public static void writeFile(String file, JSONObject object) throws Exception{
+        FileWriter fstream = new FileWriter(file, true);
+        BufferedWriter out = new BufferedWriter(fstream);
+        out.write(object.toString());
+        out.newLine();
+        out.close();
+    }
+    
+    public static void insertPerson(BloomFilter<Person> friends) {
+        ODatabaseDocumentTx database = new ODatabaseDocumentTx("remote:localhost/mgdb").open("admin","admin");
         System.out.println(String.format("running in %s mode", SQLiteJDBCLoader.isNativeMode() ? "native" : "pure-java"));
         Connection conn = null;
         try {
@@ -45,13 +74,32 @@ public class GrabData {
           String db = "/Users/hzhao/work/svn/math-genealogy-db/MGDB";//TODO : hardcoding
           conn = DriverManager.getConnection("jdbc:sqlite:" + db);
           Statement stmt = conn.createStatement();
-          ResultSet rs = stmt.executeQuery( "SELECT * FROM PERSON;" );
+          ResultSet rs = stmt.executeQuery( "SELECT * FROM PERSON" );
           while ( rs.next() ) {
-              int spid = Integer.parseInt(rs.getString("pID"));
-              String sname = rs.getString("name");
+              int spid = -1;
+              String sname = "";
+              int onlineDescendants = -1;
+              try {
+                  spid = Integer.parseInt(rs.getString("pID"));
+                  sname = rs.getString("name");
+                  onlineDescendants = Integer.parseInt(rs.getString("onlineDescendants"));
+              }catch(Exception ex) {
+                  System.out.println(ex.getMessage());
+              }
+              System.out.println("pid : " + spid + " name " + sname);
+              
               Person p = new Person(spid);
               friends.put(p);
-              System.out.println("pid : " + spid + " name " + sname);
+              
+              try {
+                  ODocument doc = new ODocument("person");
+                  doc.field("pID", spid);
+                  doc.field("name", sname);
+                  doc.field("onlineDescendants", onlineDescendants);
+                  doc.save();
+              }catch(Exception ex) {
+                  System.out.println(ex.getMessage());
+              }
           }
           rs.close();
           stmt.close();
@@ -60,19 +108,9 @@ public class GrabData {
         } catch ( Exception e ) {
           System.err.println( e.getClass().getName() + ": " + e.getMessage() );
           System.exit(0);
+        } finally {
+            database.close();
         }
-        System.out.println("Opened database successfully");
-        testBloomFilter(friends);
-//        for (String str : info) 
-//           System.out.println(str);
-//        System.out.println("\n");
-        
-//        ArrayList<String> advisorList = new ArrayList<String>();
-//        recursiveAncestors(info.get(4), advisorList);
-        /*
-        String postUrl = "http://genealogy.math.ndsu.nodak.edu/query-prep.php";
-        String postParam = "chrono=0&given_name=&other_names=&family_name=Story&school=&year=&thesis=&country=&msc=&submit=Submit";
-        //doPost(postUrl, postParam);*/
     }
     
     public static void testBloomFilter(BloomFilter<Person> friends) {
@@ -81,23 +119,7 @@ public class GrabData {
             if(!friends.mightContain(p)) {
                 System.out.print(i + " ");
             }
-        }
-//        BloomFilter<Person> friends = BloomFilter.create(new PersonFunnel(), 200000, 0.000001);
-//        for(int i = 0; i < 100000; i++) {
-//            Person person = new Person(i);
-//            person.setName("name_"+i);
-//            friends.put(person);
-//        }
-//        
-//        Person dude_1 = new Person(10900);
-//        dude_1.setName("name_10900");
-//        System.out.println(friends.mightContain(dude_1));
-//        Person dude_2 = new Person(10900);
-//        dude_2.setName("name_11900");
-//        System.out.println(friends.mightContain(dude_2));
-//        Person dude_3 = new Person(1090000);
-//        dude_3.setName("name_1090000");
-//        System.out.println(friends.mightContain(dude_3));      
+        }  
     }
 
     public static void doGet(String urlString, int values, List<String> pageInfo) throws IOException{

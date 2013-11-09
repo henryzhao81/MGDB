@@ -17,6 +17,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public class Person {
     int ID;
     String name;
@@ -189,5 +192,53 @@ public class Person {
         buffer.append("\n");
         buffer.append("Total students : " + studentsSum);
         return buffer.toString();
+    }
+    
+    public JSONObject toJSON() throws Exception {
+        JSONObject object = new JSONObject();
+        object.put("name", name);
+        object.put("id", ID);
+        if(institutions != null && institutions.size() > 0) {
+            JSONArray arr = new JSONArray();
+            for(String institution : institutions) {
+                arr.put(institution);
+            }
+            object.put("institutions", arr);
+        }
+        if(gradYears != null && gradYears.size() > 0) {
+            JSONArray arr = new JSONArray();
+            Iterator<String> itr = gradYears.keySet().iterator();
+            while(itr.hasNext()) {
+                String ins = itr.next();
+                JSONObject sub = new JSONObject();
+                sub.put("institution", ins);
+                sub.put("year", gradYears.get(ins));
+                arr.put(sub);
+            }
+            object.put("gradYears", arr);
+        }
+        if(dissertations != null && dissertations.size() > 0) {
+            JSONArray arr = new JSONArray();
+            for(String dissertation : dissertations) {
+                arr.put(dissertation);
+            }
+            object.put("disserations", arr);
+        }
+        if(advisorsIDs != null && advisorsIDs.size() > 0) {
+            JSONArray arr = new JSONArray();
+            for(int advisorId : advisorsIDs) {
+                arr.put(advisorId);
+            }
+            object.put("advisors", arr);
+        }
+        if(studentIDs != null && studentIDs.size() > 0) {
+            JSONArray arr = new JSONArray();
+            for(int student : studentIDs) {
+                arr.put(student);
+            }
+            object.put("students", arr);
+        }
+        object.put("studentsNum", studentsSum);
+        return object;
     }
 }
