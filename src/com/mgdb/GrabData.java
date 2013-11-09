@@ -31,24 +31,30 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class GrabData {
     static String getUrl = "http://genealogy.math.ndsu.nodak.edu/id.php?id=";
-    static String file = "/home/taojiang/work/git/MGDB/mgdb_info";
+    static String file = "/home/taojiang/work/git/MGDB/output/mgdb_info";
     
     public static void main(String[] args) throws IOException {
-        long currentTime = System.currentTimeMillis();
-        for(int i = 1; i< 1000; i++) {
-            ArrayList<String> pageInfo = new ArrayList<String>();
-            doGet(getUrl, i, pageInfo);
-            //ArrayList<String> info = extractInfo(pageInfo);
-            Person person = new Person(i);
-            person.parseInfo(pageInfo);
-            System.out.println(person.toString());
-            try {
-                writeFile(file + currentTime + ".json", person.toJSON());
-            }catch(Exception ex) {
-                ex.printStackTrace();
+        if(args != null && args.length > 1) {
+            int start = Integer.parseInt(args[0]);
+            int end = Integer.parseInt(args[1]);
+            long currentTime = System.currentTimeMillis();
+            for(int i = start; i< end; i++) {
+                ArrayList<String> pageInfo = new ArrayList<String>();
+                doGet(getUrl, i, pageInfo);
+                //ArrayList<String> info = extractInfo(pageInfo);
+                Person person = new Person(i);
+                person.parseInfo(pageInfo);
+                System.out.println(person.toString());
+                try {
+                    writeFile(file + currentTime + ".json", person.toJSON());
+                }catch(Exception ex) {
+                    ex.printStackTrace();
+                }
             }
+            System.out.println("Total cost : " + (System.currentTimeMillis() - currentTime));
+        } else {
+            System.out.println("2 parameters is required");
         }
-        System.out.println("Total cost : " + (System.currentTimeMillis() - currentTime));
         //recursiveAncestors(person);
         //recursiveDecendents(person);
         //BloomFilter<Person> friends = BloomFilter.create(new PersonFunnel(), 200000, 0.000001);
