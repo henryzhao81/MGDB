@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class GrabData {
     static String getUrl = "http://genealogy.math.ndsu.nodak.edu/id.php?id=";
-    static String file = "/Users/hzhao/work/git/math/MGDB/mgdb_info";
+    static String file = "/home/taojiang/work/git/MGDB/mgdb_info";
     //static int values = 152901;//63188;//126087;//85309;//128931;//63244;//85309;
     
     public static void main(String[] args) throws IOException {
