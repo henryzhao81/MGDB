@@ -1,0 +1,26 @@
+<project name="mgdb" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+    <property name="lib" value="./lib" />
+    <property name="class" value="./classes" />
+    <property name="src" value="./src" />
+    <property name="dist" value="./dist" />
+
+    <path id="class.path">
+        <fileset dir="${lib}" includes="*.jar"/>
+        <pathelement path="${class}" />
+    </path>
+
+    <target name="compile">
+        <delete quiet="true" dir="${class}"/>
+        <delete dir="${dist}"/>
+        <mkdir dir="${class}"/>
+        <mkdir dir="${dist}" />
+        <javac srcdir="${src}" destdir="${class}" fork="yes" debug="on" classpathref="class.path" />
+    </target>
+
+    <target name="build" depends="compile">
+        <jar jarfile="${dist}/mgdb.jar" basedir="${class}"/>
+        <delete dir="${class}"/>
+    </target>
+
+</project>
