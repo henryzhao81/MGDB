@@ -2,9 +2,11 @@ package com.mgdb;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.json.JSONObject;
 import org.sqlite.SQLiteJDBCLoader;
 
@@ -53,7 +56,7 @@ public class GrabData {
 				        System.out.println(person.toString());
 				        if(person.getName() != null && person.getName().length() > 0) {
 				            try {
-				                writeFile(file + "_" + suffix + ".json", person.toJSON());
+				                writeFile(file + "_" + suffix + ".txt", person.toJSON());
 				            } catch (Exception ex) {
 				                ex.printStackTrace();
 				            }
@@ -77,7 +80,9 @@ public class GrabData {
     }
     
     public static void writeFile(String file, JSONObject object) throws Exception{
-        FileWriter fstream = new FileWriter(file, true);
+        //FileWriter fstream = new FileWriter(file, true);
+        FileWriterWithEncoding fstream = new FileWriterWithEncoding(file, "UTF-8", true);
+        //BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
         BufferedWriter out = new BufferedWriter(fstream);
         out.write(object.toString());
         out.newLine();
@@ -148,10 +153,11 @@ public class GrabData {
             URL getUrl = new URL(getURL);
             connection = (HttpURLConnection) getUrl.openConnection();
             connection.connect();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),"utf-8"));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"));
             String lines;
             while ((lines = reader.readLine()) != null){
-                pageInfo.add(lines);
+                String each = new String(lines.getBytes(), "UTF-8");
+                pageInfo.add(each);
             }
             reader.close();
         }catch(Exception ex) {
@@ -162,124 +168,6 @@ public class GrabData {
             }
         }
     }
-    
-//    public static void doPost(String urlString, String values) throws IOException{       
-//        URL postUrl = new URL(urlString);
-//
-//        HttpURLConnection connection = (HttpURLConnection) postUrl.openConnection();
-//
-//        connection.setDoOutput(true);
-//        connection.setDoInput(true);
-//        connection.setRequestMethod("POST");
-//        connection.setUseCaches(false);
-//        connection.setInstanceFollowRedirects(true);
-//        connection.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
-//        connection.connect();        
-//        
-//        DataOutputStream out = new DataOutputStream(connection
-//                .getOutputStream());
-//        out.writeBytes(values); 
-//        out.flush();
-//        out.close(); // flush and close
-//        
-//        int responseCode = connection.getResponseCode();
-//        System.out.println("\nSending 'POST' request to URL : " + urlString);
-//        System.out.println("Post parameters : " + values);
-//        System.out.println("Response Code : " + responseCode);
-//        
-//        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),"utf-8"));
-//        String line="";
-//        while ((line = reader.readLine()) != null){
-//            System.out.println(line);
-//        }
-//        reader.close();
-//        connection.disconnect();
-//    }
-    
-//    public static ArrayList<String> extractInfo(ArrayList<String> pageInfo) throws UnsupportedEncodingException {
-//        String name = "", institution="", year="", dissertation="", advisors="", students="", studNo="0";
-//        ArrayList<String> info = new ArrayList<String>();
-//        
-//        int i=0;
-//        int size = pageInfo.size();
-//        
-//        while((i<size) && (!pageInfo.get(i).contains("h2 style=")) ){
-//            i++;
-//        }
-//        
-//        while(i<size) {
-//            String line = pageInfo.get(i);
-//            
-//            if (line.contains("h2 style=")) {
-//                i +=1;
-//                line = pageInfo.get(i);
-//                name = line.split("</h2>")[0];
-//            }
-//            
-//            //Get year and university
-//            if (line.contains("#006633; margin-left: 0.5em\">")){
-//                String inst_year = line.split("#006633; margin-left: 0.5em\">")[1];
-//                institution += inst_year.split("</span>")[0]+ ";";
-//                year += inst_year.split("</span>")[1].trim() + ";";
-//
-///*              if len(self.institution[len(self.institution)-1]) == 0:
-//                    self.institution[len(self.institution)-1] = None
-//                if len(self.year[len(self.year)-1]) == 0:
-//                    self.year[len(self.year)-1] = None*/
-//            }
-//            
-//            //Get dissertation title
-//            if (line.contains("thesisTitle")) {
-//                i += 2;
-//                line = pageInfo.get(i);
-//                if (line.split("</span></div>").length != 0)
-//                   dissertation += line.split("</span></div>")[0] + ";";
-///*              if len(self.dissertation[len(self.dissertation)-1]) == 0:
-//                    self.dissertation[len(self.dissertation)-1] = None*/
-//            }
-//            
-//            // Get all advisors
-//            if (line.contains("<p style=\"text-align: center; line-height: 2.75ex\">")) {
-//                int len = line.split("a href=\"id.php\\?id=").length;
-//                String[] advisor_id = line.split("a href=\"id.php\\?id=");
-//                
-//                int j=1; 
-//                while(j<len) {
-//                    advisors += advisor_id[j].split("\">")[0] + ";";
-//                    j++;
-//                }
-//            }
-//            
-//            //Get students
-//            if (line.contains("<td><a href=\"id.php?id=")) {
-//                students +=line.split("a href=\"id.php\\?id=")[1].split("\">")[0]+";";              
-//                //students += line.split("a href=\"id.php?")[1].split("id=")[1].split("\">")[0]+";";
-//            }
-//            
-//            // Get number of descendants
-//            // Uses only '</a> and ' as search string and not '>students</a> and '
-//            // because 'students' can change to 'student' !
-//            if (line.contains("According to our current on-line database")) 
-//                studNo = line.split("</a> and ")[1].split("<a href=")[0];
-//
-//            if (line.contains("No students known."))
-//                studNo = "0";
-//
-//            if (line.contains("If you have additional information or"))
-//                break;
-//            
-//            i++;
-//        }   
-//        info.add(name);
-//        info.add(institution);
-//        info.add(year);
-//        info.add(dissertation);
-//        info.add(advisors);
-//        info.add(students);
-//        info.add(studNo);
-//        
-//        return info;
-//    }
     
     public static void recursiveAncestors(Person person) throws IOException {
         List<Integer> advisorIds = person.getAdvisorsIDs();

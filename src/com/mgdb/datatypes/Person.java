@@ -86,11 +86,13 @@ public class Person {
                 i +=1;
                 line = lines.get(i);
                 name = line.split("</h2>")[0];
+                System.out.println("name is " + name);
             }
             //Get year and university
             if (line.contains("#006633; margin-left: 0.5em\">")){
                 String inst_year = line.split("#006633; margin-left: 0.5em\">")[1];
                 String strInstitution = inst_year.split("</span>")[0];
+                System.out.println("strInstitution is " + strInstitution);
                 if(institutions == null) institutions = new ArrayList<String>();
                 institutions.add(strInstitution);
                 int year = -1;
@@ -110,6 +112,7 @@ public class Person {
                 line = lines.get(i);
                 if (line.split("</span></div>").length != 0) {
                    String strDissertation = line.split("</span></div>")[0];
+                   System.out.println("strInstitution is " + strDissertation);
                    if(dissertations == null) dissertations = new ArrayList<String>();
                    dissertations.add(strDissertation);
                 }
