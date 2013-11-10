@@ -44,7 +44,7 @@ public class GrabData {
 			int end = Integer.parseInt(args[1]);
 			String suffix = start + "_" + end;
 			long currentTime = System.currentTimeMillis();
-			for (int i = start; i < end; i++) {
+			for (int i = start; i <= end; i++) {
 				ArrayList<String> pageInfo = new ArrayList<String>();
 				doGet(getUrl, i, pageInfo);
 				if(pageInfo.size() != 0) {
