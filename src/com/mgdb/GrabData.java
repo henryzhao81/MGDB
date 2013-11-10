@@ -44,23 +44,28 @@ public class GrabData {
 			for (int i = start; i < end; i++) {
 				ArrayList<String> pageInfo = new ArrayList<String>();
 				doGet(getUrl, i, pageInfo);
-				// ArrayList<String> info = extractInfo(pageInfo);
-				if (pageInfo.get(0).contains(notExistStr)) {
-					System.out.println("The ID " + i + " doesn't exist on the website."); 
+				if(pageInfo.size() != 0) {
+				    if (pageInfo.get(0).contains(notExistStr)) {
+				        System.out.println("The ID " + i + " doesn't exist on the website."); 
+				    } else {
+				        Person person = new Person(i);
+				        person.parseInfo(pageInfo);   
+				        System.out.println(person.toString());
+				        if(person.getName() != null && person.getName().length() > 0) {
+				            try {
+				                writeFile(file + "_" + suffix + ".json", person.toJSON());
+				            } catch (Exception ex) {
+				                ex.printStackTrace();
+				            }
+				        } else {
+				            System.out.println("Empty username for ID " + i);
+				        }
+				    }
 				} else {
-					Person person = new Person(i);
-					person.parseInfo(pageInfo);
-					System.out.println(person.toString());
-					try {
-						writeFile(file + "_" + suffix + ".json",
-								person.toJSON());
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
+				    System.out.println("Failed to parse pageInfo for ID : " + i);
 				}
 			}
-			System.out.println("Total cost : "
-					+ (System.currentTimeMillis() - currentTime));
+			System.out.println("Total cost : "+ (System.currentTimeMillis() - currentTime));
         } else {
             System.out.println("2 or more parameters is required");
         }
@@ -136,21 +141,26 @@ public class GrabData {
         }  
     }
 
-    public static void doGet(String urlString, int values, List<String> pageInfo) throws IOException{
-        String getURL = urlString + values;
-        URL getUrl = new URL(getURL);
-        HttpURLConnection connection = (HttpURLConnection) getUrl
-                .openConnection();
-        connection.connect();
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),"utf-8"));
-        String lines;
-        while ((lines = reader.readLine()) != null){
-            pageInfo.add(lines);
+    public static void doGet(String urlString, int values, List<String> pageInfo) {
+        HttpURLConnection connection = null;
+        try {
+            String getURL = urlString + values;
+            URL getUrl = new URL(getURL);
+            connection = (HttpURLConnection) getUrl.openConnection();
+            connection.connect();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),"utf-8"));
+            String lines;
+            while ((lines = reader.readLine()) != null){
+                pageInfo.add(lines);
+            }
+            reader.close();
+        }catch(Exception ex) {
+            ex.printStackTrace();
+        }finally {
+            if(connection != null) {
+                connection.disconnect();
+            }
         }
-        reader.close();
-
-        connection.disconnect();
     }
     
 //    public static void doPost(String urlString, String values) throws IOException{       
