@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -86,12 +87,14 @@ public class Person {
                 i +=1;
                 line = lines.get(i);
                 name = line.split("</h2>")[0];
+                name = StringEscapeUtils.unescapeHtml(name);
                 System.out.println("name is " + name);
             }
             //Get year and university
             if (line.contains("#006633; margin-left: 0.5em\">")){
                 String inst_year = line.split("#006633; margin-left: 0.5em\">")[1];
                 String strInstitution = inst_year.split("</span>")[0];
+                strInstitution = StringEscapeUtils.unescapeHtml(strInstitution);
                 System.out.println("strInstitution is " + strInstitution);
                 if(institutions == null) institutions = new ArrayList<String>();
                 institutions.add(strInstitution);
@@ -112,7 +115,8 @@ public class Person {
                 line = lines.get(i);
                 if (line.split("</span></div>").length != 0) {
                    String strDissertation = line.split("</span></div>")[0];
-                   System.out.println("strInstitution is " + strDissertation);
+                   strDissertation = StringEscapeUtils.unescapeHtml(strDissertation);
+                   System.out.println("strDissertation is " + strDissertation);
                    if(dissertations == null) dissertations = new ArrayList<String>();
                    dissertations.add(strDissertation);
                 }

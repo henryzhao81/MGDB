@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -21,6 +22,7 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.io.output.FileWriterWithEncoding;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.json.JSONObject;
 import org.sqlite.SQLiteJDBCLoader;
 
@@ -156,6 +158,7 @@ public class GrabData {
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"));
             String lines;
             while ((lines = reader.readLine()) != null){
+                //String each = StringEscapeUtils.unescapeHtml(lines);//new String(lines.getBytes(), "UTF-8");
                 pageInfo.add(lines);
             }
             reader.close();
