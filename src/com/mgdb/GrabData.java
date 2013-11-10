@@ -33,27 +33,34 @@ public class GrabData {
     static String getUrl = "http://genealogy.math.ndsu.nodak.edu/id.php?id=";
     //static String file = "/Users/hzhao/work/git/math/MGDB/output/mgdb_info";
     static String file = "/home/taojiang/work/git/MGDB/output/mgdb_info";
+    static String notExistStr = "You have specified an ID that does not exist in the database. Please back up and try again.";
     
     public static void main(String[] args) throws IOException {
-        if(args != null && args.length > 1) {
-            int start = Integer.parseInt(args[0]);
-            int end = Integer.parseInt(args[1]);
-            String suffix = start + "_" + end;
-            long currentTime = System.currentTimeMillis();
-            for(int i = start; i< end; i++) {
-                ArrayList<String> pageInfo = new ArrayList<String>();
-                doGet(getUrl, i, pageInfo);
-                //ArrayList<String> info = extractInfo(pageInfo);
-                Person person = new Person(i);
-                person.parseInfo(pageInfo);
-                System.out.println(person.toString());
-                try {
-                    writeFile(file + "_" + suffix + ".json", person.toJSON());
-                }catch(Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-            System.out.println("Total cost : " + (System.currentTimeMillis() - currentTime));
+		if (args != null && args.length > 1) {
+			int start = Integer.parseInt(args[0]);
+			int end = Integer.parseInt(args[1]);
+			String suffix = start + "_" + end;
+			long currentTime = System.currentTimeMillis();
+			for (int i = start; i < end; i++) {
+				ArrayList<String> pageInfo = new ArrayList<String>();
+				doGet(getUrl, i, pageInfo);
+				// ArrayList<String> info = extractInfo(pageInfo);
+				if (pageInfo.get(0).contains(notExistStr)) {
+					System.out.println("The ID " + i + " doesn't exist on the website."); 
+				} else {
+					Person person = new Person(i);
+					person.parseInfo(pageInfo);
+					System.out.println(person.toString());
+					try {
+						writeFile(file + "_" + suffix + ".json",
+								person.toJSON());
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
+			System.out.println("Total cost : "
+					+ (System.currentTimeMillis() - currentTime));
         } else {
             System.out.println("2 or more parameters is required");
         }
