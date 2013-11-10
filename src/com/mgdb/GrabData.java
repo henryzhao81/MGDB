@@ -156,8 +156,7 @@ public class GrabData {
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"));
             String lines;
             while ((lines = reader.readLine()) != null){
-                String each = new String(lines.getBytes(), "UTF-8");
-                pageInfo.add(each);
+                pageInfo.add(lines);
             }
             reader.close();
         }catch(Exception ex) {
