@@ -35,6 +35,8 @@ public class Person {
         this.ID = id;
     }
     
+    public Person() {}
+    
     public void setID(int iD) {
         ID = iD;
     }
@@ -247,5 +249,39 @@ public class Person {
         }
         object.put("studentsNum", studentsSum);
         return object;
+    }
+    
+    public void fromJson(JSONObject obj) throws Exception{
+        this.ID = obj.getInt("id");
+        this.name = obj.getString("name");
+        if(obj.has("students")) {
+            JSONArray students = obj.getJSONArray("students");
+            if(students != null && students.length() > 0) {
+                this.studentIDs = new ArrayList<Integer>();
+                int size = students.length();
+                for(int i = 0; i < size; i++) {
+                    this.studentIDs.add(students.getInt(i));
+                }
+            }
+        }
+        if(obj.has("Dissertation Info")) {
+            JSONArray dissertInfos = obj.getJSONArray("Dissertation Info"); 
+            if(dissertInfos != null && dissertInfos.length() > 0) {
+                this.advisorsIDs = new ArrayList<Integer>();
+                int size = dissertInfos.length();
+                for(int i = 0; i < size; i++) {
+                    JSONObject dissert = dissertInfos.getJSONObject(i);
+                    if(dissert.has("advisors")) {
+                        String advisors = dissert.getString("advisors");
+                        String[] parts = advisors.split(",");
+                        for(String part : parts) {
+                            if(part != null && (part.trim()).length() > 0) {
+                                this.advisorsIDs.add(Integer.parseInt(part));
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
