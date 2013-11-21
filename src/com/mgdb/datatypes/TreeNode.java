@@ -17,6 +17,24 @@ public class TreeNode {
     TreeNode parent;
     TreeNode[] children;
     int level;
+	int preindex;
+	int postindex;
+    
+    public int getPreindex() {
+		return preindex;
+	}
+
+	public int getPostindex() {
+		return postindex;
+	}
+	
+    public void setPreindex(int preindex) {
+		this.preindex = preindex;
+	}
+
+	public void setPostindex(int postindex) {
+		this.postindex = postindex;
+	}
     
     public TreeNode() {}
     

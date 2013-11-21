@@ -1,14 +1,3 @@
-/**
-********************************
-Copyright 2013 Proteus Digital Health, Inc.
-********************************
-
-CONFIDENTIAL INFORMATION OF PROTEUS DIGITAL HEALTH, INC.
-
-Author : hzhao@proteusdh.com
-Nov 3, 2013
-*/
-
 package com.mgdb.datatypes;
 
 import com.google.common.base.Charsets;
@@ -22,9 +11,8 @@ public class PersonFunnel implements Funnel<Person> {
     
     @Override
     public void funnel(Person person, PrimitiveSink into) {
-        into
-        .putInt(person.ID);
-        //.putString(person.name, Charsets.UTF_8);
+        into.putInt(person.ID);
+        //putString(person.name, Charsets.UTF_8);
     }
 
 }

@@ -1,16 +1,7 @@
-/**
-********************************
-Copyright 2013 Proteus Digital Health, Inc.
-********************************
-
-CONFIDENTIAL INFORMATION OF PROTEUS DIGITAL HEALTH, INC.
-
-Author : hzhao@proteusdh.com
-Nov 2, 2013
-*/
-
 package com.mgdb.datatypes;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,17 +16,20 @@ public class Person {
     int ID;
     String name;
     List<String> institutions;
-    Map<String, Integer> gradYears; //String : institution,  Integer : year
+    List<String> gradYears;
     List<String> dissertations;
-    List<Integer> advisorsIDs;
+    List<String> advisorsIDs;
+    Map<Integer,ArrayList<String>> dissInfo;
     List<Integer> studentIDs;
     int studentsSum;
     
-    public Person(int id) {
+    public void setStudentsSum(int studentsSum) {
+		this.studentsSum = studentsSum;
+	}
+
+	public Person(int id) {
         this.ID = id;
     }
-    
-    public Person() {}
     
     public void setID(int iD) {
         ID = iD;
@@ -57,15 +51,11 @@ public class Person {
         return institutions;
     }
 
-    public Map<String, Integer> getGradYears() {
-        return gradYears;
-    }
-
     public List<String> getDissertations() {
         return dissertations;
     }
 
-    public List<Integer> getAdvisorsIDs() {
+    public List<String> getAdvisorsIDs() {
         return advisorsIDs;
     }
 
@@ -80,6 +70,8 @@ public class Person {
     public void parseInfo(List<String> lines) {
         int i = 0;
         int size = lines.size();
+        
+        int order = 1;
         while((i<size) && (!lines.get(i).contains("h2 style=")) ){
             i++;
         }
@@ -88,53 +80,58 @@ public class Person {
             if (line.contains("h2 style=")) {
                 i +=1;
                 line = lines.get(i);
-                name = line.split("</h2>")[0];
+                name = line.split("</h2>")[0].trim();
                 name = StringEscapeUtils.unescapeHtml(name);
-                System.out.println("name is " + name);
             }
+            
             //Get year and university
             if (line.contains("#006633; margin-left: 0.5em\">")){
+            	 if(institutions != null && institutions.size()>0){
+            		setDissInfo(order);
+            		order += 1;
+                 }
+            	 
                 String inst_year = line.split("#006633; margin-left: 0.5em\">")[1];
                 String strInstitution = inst_year.split("</span>")[0];
                 strInstitution = StringEscapeUtils.unescapeHtml(strInstitution);
-                System.out.println("strInstitution is " + strInstitution);
                 if(institutions == null) institutions = new ArrayList<String>();
                 institutions.add(strInstitution);
-                int year = -1;
-                try {
-                    year = Integer.parseInt(inst_year.split("</span>")[1].trim());
-                }catch(Exception ex) {
-                    System.out.println("no year found");
-                }
-                if(gradYears == null) gradYears = new HashMap<String, Integer>();
-                if(!gradYears.containsKey(strInstitution)) {
-                    gradYears.put(strInstitution, year);
-                }
-            }
+                
+                String strYear = inst_year.split("</span>")[1].trim();
+                if(gradYears == null) gradYears = new ArrayList<String>();
+                gradYears.add(strYear);
+              }
+            
             //Get dissertation title
             if (line.contains("thesisTitle")) {
                 i += 2;
                 line = lines.get(i);
+                if(dissertations == null) dissertations = new ArrayList<String>();
                 if (line.split("</span></div>").length != 0) {
                    String strDissertation = line.split("</span></div>")[0];
-                   strDissertation = StringEscapeUtils.unescapeHtml(strDissertation);
-                   System.out.println("strDissertation is " + strDissertation);
-                   if(dissertations == null) dissertations = new ArrayList<String>();
+                   strDissertation = StringEscapeUtils.unescapeHtml(strDissertation);                   
                    dissertations.add(strDissertation);
-                }
+                } else
+                	dissertations.add("");
             }
+            
             // Get all advisors
-            if (line.contains("<p style=\"text-align: center; line-height: 2.75ex\">")) {
+            if (line.contains("<p style=\"text-align: center; line-height: 2.75ex\">")) {                              
                 int len = line.split("a href=\"id.php\\?id=").length;
+                
                 String[] advisor_id = line.split("a href=\"id.php\\?id=");                
                 int j=1; 
+                StringBuffer buffer = new StringBuffer();
                 while(j<len) {
                     int advisorId = Integer.parseInt(advisor_id[j].split("\">")[0]);
-                    if(advisorsIDs == null) advisorsIDs = new ArrayList<Integer>();
-                    advisorsIDs.add(advisorId);
+                    buffer.append(advisorId);
+                    buffer.append(",");
                     j++;
                 }
+                if(advisorsIDs == null) advisorsIDs = new ArrayList<String>();
+                advisorsIDs.add(buffer.toString());
             }
+            
             //Get students
             if (line.contains("<td><a href=\"id.php?id=")) {
                 int student = Integer.parseInt(line.split("a href=\"id.php\\?id=")[1].split("\">")[0]);
@@ -152,54 +149,38 @@ public class Person {
                 break;
             i++;
         }
+        if(institutions != null && institutions.size()>0){
+        	setDissInfo(order);
+         }
     }
     
     public String toString() {
         StringBuffer buffer = new StringBuffer();
-        buffer.append("name : " + name + " id : " + ID + " \n");
-        buffer.append("institutions : ");
-        if(institutions != null && institutions.size() > 0) {
-            for(String institution : institutions) {
-                buffer.append(institution);
-                buffer.append(" , ");
-            }
-        }
-        buffer.append("\n");
-        buffer.append("gradYears : ");
-        if(gradYears != null && gradYears.size() > 0) {
-            Iterator<String> itr = gradYears.keySet().iterator();
+        buffer.append("name : " + name + ", id : " + ID + " \n");
+
+        buffer.append("Dissertation Info: ");
+        if(dissInfo != null && dissInfo.size() > 0) {
+            Iterator<Integer> itr = dissInfo.keySet().iterator();
             while(itr.hasNext()) {
-                String ins = itr.next();
-                buffer.append("institution : " + ins + "-year : " + gradYears.get(ins));
-                buffer.append(" , ");
+                int order = itr.next();
+                ArrayList<String> info = dissInfo.get(order);
+                buffer.append(order + "-");
+                buffer.append("institution: " + info.get(0) + ", year: " + info.get(1)+", ");
+                buffer.append("dissertation: " + info.get(2) + ", advisors: " + info.get(3));
+                buffer.append("; ");
             }
         }
         buffer.append("\n");
-        buffer.append("disserations : ");
-        if(dissertations != null && dissertations.size() > 0) {
-            for(String dissertation : dissertations) {
-                buffer.append(dissertation);
-                buffer.append(" , ");
-            }
-        }
-        buffer.append("\n");
-        buffer.append("advisors : ");
-        if(advisorsIDs != null && advisorsIDs.size() > 0) {
-            for(int advisorId : advisorsIDs) {
-                buffer.append(advisorId);
-                buffer.append(" , ");
-            }
-        }
-        buffer.append("\n");
-        buffer.append("students : ");
+
+        buffer.append("students: ");
         if(studentIDs != null && studentIDs.size() > 0) {
             for(int student : studentIDs) {
                 buffer.append(student);
-                buffer.append(" , ");
+                buffer.append(",");
             }
         }
         buffer.append("\n");
-        buffer.append("Total students : " + studentsSum);
+        buffer.append("Total students: " + studentsSum);
         return buffer.toString();
     }
     
@@ -207,39 +188,7 @@ public class Person {
         JSONObject object = new JSONObject();
         object.put("name", name);
         object.put("id", ID);
-        if(institutions != null && institutions.size() > 0) {
-            JSONArray arr = new JSONArray();
-            for(String institution : institutions) {
-                arr.put(institution);
-            }
-            object.put("institutions", arr);
-        }
-        if(gradYears != null && gradYears.size() > 0) {
-            JSONArray arr = new JSONArray();
-            Iterator<String> itr = gradYears.keySet().iterator();
-            while(itr.hasNext()) {
-                String ins = itr.next();
-                JSONObject sub = new JSONObject();
-                sub.put("institution", ins);
-                sub.put("year", gradYears.get(ins));
-                arr.put(sub);
-            }
-            object.put("gradYears", arr);
-        }
-        if(dissertations != null && dissertations.size() > 0) {
-            JSONArray arr = new JSONArray();
-            for(String dissertation : dissertations) {
-                arr.put(dissertation);
-            }
-            object.put("disserations", arr);
-        }
-        if(advisorsIDs != null && advisorsIDs.size() > 0) {
-            JSONArray arr = new JSONArray();
-            for(int advisorId : advisorsIDs) {
-                arr.put(advisorId);
-            }
-            object.put("advisors", arr);
-        }
+        
         if(studentIDs != null && studentIDs.size() > 0) {
             JSONArray arr = new JSONArray();
             for(int student : studentIDs) {
@@ -248,10 +197,43 @@ public class Person {
             object.put("students", arr);
         }
         object.put("studentsNum", studentsSum);
+
+        if(dissInfo != null && dissInfo.size() > 0) {
+            JSONArray arr = new JSONArray();
+            Iterator<Integer> itr = dissInfo.keySet().iterator();
+            while(itr.hasNext()) {
+            	int pid = itr.next();
+            	ArrayList<String> info = dissInfo.get(pid);
+                JSONObject sub = new JSONObject();
+                sub.put("institution", info.get(0));
+                sub.put("year", info.get(1));
+                sub.put("dissertation", info.get(2));
+                sub.put("advisors", info.get(3));
+                arr.put(sub);
+            }
+            object.put("Dissertation Info", arr);
+        }
         return object;
     }
     
-    public void fromJson(JSONObject obj) throws Exception{
+	public void setDissInfo(int order) {
+		int len = institutions.size();
+		ArrayList<String> info = new ArrayList<String>();
+		info.add(institutions.get(len - 1));
+		info.add(gradYears.get(len - 1));
+		info.add(dissertations.get(len - 1));
+		if (advisorsIDs == null || advisorsIDs.size() < len) {
+			if (advisorsIDs == null)
+				advisorsIDs = new ArrayList<String>();
+			advisorsIDs.add("");
+		}
+		info.add(advisorsIDs.get(advisorsIDs.size() - 1));
+		if (dissInfo == null)
+			dissInfo = new HashMap<Integer, ArrayList<String>>();
+		dissInfo.put(order, info);
+	}
+	
+	public void fromJson(JSONObject obj) throws Exception{
         this.ID = obj.getInt("id");
         this.name = obj.getString("name");
         if(obj.has("students")) {
@@ -267,7 +249,7 @@ public class Person {
         if(obj.has("Dissertation Info")) {
             JSONArray dissertInfos = obj.getJSONArray("Dissertation Info"); 
             if(dissertInfos != null && dissertInfos.length() > 0) {
-                this.advisorsIDs = new ArrayList<Integer>();
+                this.advisorsIDs = new ArrayList<String>();
                 int size = dissertInfos.length();
                 for(int i = 0; i < size; i++) {
                     JSONObject dissert = dissertInfos.getJSONObject(i);
@@ -276,7 +258,7 @@ public class Person {
                         String[] parts = advisors.split(",");
                         for(String part : parts) {
                             if(part != null && (part.trim()).length() > 0) {
-                                this.advisorsIDs.add(Integer.parseInt(part));
+                                this.advisorsIDs.add(part);
                             }
                         }
                     }
@@ -284,4 +266,16 @@ public class Person {
             }
         }
     }
+	
+	public void fromDB(ResultSet rs) throws SQLException {
+		try {
+			this.ID = rs.getInt("pid");
+			this.name = rs.getString("name");
+			this.advisorsIDs = new ArrayList<String>();
+			this.advisorsIDs.add(rs.getString("advisor"));
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.exit(0);
+		}
+	}
 }
