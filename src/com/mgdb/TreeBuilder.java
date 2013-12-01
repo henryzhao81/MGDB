@@ -41,8 +41,6 @@ public class TreeBuilder {
     private List<TreeNode> firstLevel = new ArrayList<TreeNode>();
     private Map<Integer, TreeNode> tMap = new HashMap<Integer, TreeNode>();
     private static TreeNode root = new TreeNode();
-    private static int preorderIdx = 0;
-    private static int postorderIdx = 0;
 
     public TreeBuilder() {}
     
@@ -51,8 +49,8 @@ public class TreeBuilder {
        // builder.readPersonFromFile("/Users/hzhao/work/git/math/MGDB/mgdb_info_1_180000.txt");
         builder.readPersonFromFile("/home/taojiang/work/git/MGDB/output/20131113/mgdb_info_1_180000.txt");
         //builder.readPersonFromDB();
-        builder.preOrder(builder.root, new int[]{0});
-        builder.postOrder(root, new int[]{0});        
+     //   builder.preOrder(builder.root, new int[]{0});
+    //    builder.postOrder(root, new int[]{0});        
     }
     
     public TreeNode getRoot() {
@@ -75,21 +73,21 @@ public class TreeBuilder {
 			}
 		}
 	}
-    
-    public void postOrder(TreeNode node, int[] index) {
+
+	public void postOrder(TreeNode node, int[] index) {
 		if (node == null)
 			return;
 		TreeNode[] children = node.getChildren();
 		if (children != null && children.length > 0) {
 			postOrder(children[0], index);
-		    if (children.length > 1) {
-			for (int i = 1; i < children.length; i++) {
-				postOrder(children[i], index);
+			if (children.length > 1) {
+				for (int i = 1; i < children.length; i++) {
+					postOrder(children[i], index);
+				}
 			}
 		}
-		}
 		node.setPostindex(index[0]++);
-		System.out.println(node.getPid()+" : "+node.getPostindex());
+		System.out.println(node.getPid() + " : " + node.getPostindex());
     }
 
     public void readPersonFromFile(String file) throws Exception {
@@ -119,7 +117,7 @@ public class TreeBuilder {
         System.out.println("firstLevel  : " + firstLevel.size());
         this.buildRoot();
         
-        TreeNode check = tMap.get(3);
+        TreeNode check = tMap.get(56216);
         int[] v = new int[1];
         v[0] = 0;
         viewNode(check, v);
@@ -191,7 +189,6 @@ public class TreeBuilder {
             int key = keys.next();
             Person eachPer = this.pMap.get(key);
             TreeNode eachNode = this.tMap.get(key);
-            System.out.println(eachNode.getPid());
             List<String> aids = eachPer.getAdvisorsIDs();
             if(aids != null && aids.size() > 0) {
                 TreeNode adNode = this.tMap.get(Integer.valueOf(aids.get(0)));
