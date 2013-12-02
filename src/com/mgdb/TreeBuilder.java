@@ -46,26 +46,32 @@ public class TreeBuilder {
     
     public static void main(String[] args) throws Exception {
         TreeBuilder builder = new TreeBuilder();
-       // builder.readPersonFromFile("/Users/hzhao/work/git/math/MGDB/mgdb_info_1_180000.txt");
-        builder.readPersonFromFile("/home/taojiang/work/git/MGDB/output/20131113/mgdb_info_1_180000.txt");
+        builder.readPersonFromFile("/Users/hzhao/work/git/math/MGDB/output/mgdb_info_1_180000.txt");
+        //builder.readPersonFromFile("/home/taojiang/work/git/MGDB/output/20131113/mgdb_info_1_180000.txt");
         //builder.readPersonFromDB();
-     //   builder.preOrder(builder.root, new int[]{0});
-    //    builder.postOrder(root, new int[]{0});        
+        builder.preOrder(root, new int[]{0});
+        builder.postOrder(root, new int[]{0});
+        
+        for(int i = 0 ; i < 180000; i++) {
+            TreeNode eachNode = builder.tMap.get(i);
+            if(eachNode != null) {
+                int preIndex = eachNode.getPreindex();
+                int postIndex = eachNode.getPostindex();
+                if(preIndex == 0 && postIndex == 0)
+                    System.out.println("node[" + eachNode.getPid() + "] : " + preIndex + "_" + postIndex);
+            }
+        }
     }
     
     public TreeNode getRoot() {
         return root;
-    }
-
-    public void setRoot(TreeNode root) {
-        this.root = root;
     }
     
 	public void preOrder(TreeNode node, int[] index) {
 		if (node == null)
 			return;
 		node.setPreindex(index[0]++);
-		System.out.println(node.getPid() + " : " + node.getPreindex());
+		//System.out.println(node.getPid() + " : " + node.getPreindex());
 		TreeNode[] children = node.getChildren();
 		if (children != null && children.length > 0) {
 			for (TreeNode each : children) {
@@ -87,7 +93,10 @@ public class TreeBuilder {
 			}
 		}
 		node.setPostindex(index[0]++);
-		System.out.println(node.getPid() + " : " + node.getPostindex());
+//		if(node.getPreindex() == node.getPostindex()) {
+//		    String pp = node.getPreindex() + "/" + node.getPostindex();
+//		    System.out.println(node.getPid() + " : " + pp);
+//		}
     }
 
     public void readPersonFromFile(String file) throws Exception {
@@ -208,15 +217,21 @@ public class TreeBuilder {
             List<Integer> cids = eachPer.getStudentIDs();
             if(cids != null && cids.size() > 0) {
                 int size = cids.size();
-                TreeNode[] children = new TreeNode[size];
-                for(int i = 0; i < size; i++) {
-                    TreeNode cNode = this.tMap.get(cids.get(i));
-                    TreeNode pNode = cNode.getParent();
-                    if (pNode != null && pNode.getPid() == key) {
-                    	children[i] = cNode;
-                    }                    
-                }
-                eachNode.setChildren(children);
+                //TreeNode[] children = new TreeNode[size];
+                List<TreeNode> children = new ArrayList<TreeNode>();
+                try {
+                    for(int i = 0; i < size; i++) {
+                        TreeNode cNode = this.tMap.get(cids.get(i));
+                        TreeNode pNode = cNode.getParent();
+                        if (pNode != null && pNode.getPid() == key) {
+                            //children[i] = cNode;
+                            children.add(cNode);
+                        }                    
+                    }
+                }catch(Exception ex) {
+                    ex.printStackTrace();
+                }               
+                eachNode.setChildren(children.toArray(new TreeNode[0]));
             }
         }
     }

@@ -78,4 +78,11 @@ public class TreeNode {
         this.level = level;
     }
 
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("pid : " + this.getPid() + " ");
+        buffer.append("preIndex : " + this.getPreindex() + " ");
+        buffer.append("postIndex : " + this.getPostindex() + " ");
+        return buffer.toString();
+    }
 }
